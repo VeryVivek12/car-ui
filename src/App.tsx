@@ -21,14 +21,12 @@ function App() {
     const [currentUser, setCurrentUser] = useState("")
     const [currentMileage, setCurrentMileage] = useState(5)
 
-    const [notifications, setNotifications] = useState<any>({notificationMessage: ""});
 
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
                 const response = await fetch(`http://localhost:8080/api/v1/notification?vehicleId=${currentVehicle}&userId=${currentUser}`);
                 const data = await response.json();
-                setNotifications(data);
                 toast(data.notificationMessage)
             } catch (error) {
                 console.error('Fetch error:', error);
