@@ -2,8 +2,10 @@ import {useEffect, useState} from 'react'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select"
 import {Input} from "@/components/ui/input"
 import {Button} from "@/components/ui/button"
+import {Toaster} from "@/components/ui/sonner"
 
 import './App.css'
+import {toast} from "sonner";
 
 function App() {
 
@@ -70,8 +72,33 @@ function App() {
                     }
                 });
                 const data = await res.json();
-                setNotificationText(data.message);
+                if (data.message) {
+                    setNotificationText(data.message);
+                    toast(data.message)
+                }
             }, step * 1000);
+        }
+    }
+
+    async function updateMileage() {
+        try {
+            const res = await fetch(`http://localhost:8080/api/v1/efficiency-targets`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    efficientTargetValue: currentUsersEfficiencyTarget,
+                    status: 1,
+                    userId: currentUser,
+                    vehicleId: currentVehicle
+                }),
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            const data = await res.json();
+            setCurrentUsersEfficiencyTarget(data.efficientTargetValue)
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
         }
     }
 
@@ -113,25 +140,37 @@ function App() {
 
                 {
                     currentUsersEfficiencyTarget &&
-                    <p>Efficiency Target: {currentUsersEfficiencyTarget}</p>
+                    <div className="flex flex-row mx-2 items-center">
+                        <p className="mx-2 w-[180px]">Efficiency Target: </p>
+                        <Input className="w-[180px]" type="number"
+                               value={currentUsersEfficiencyTarget} step="1"
+                               onChange={event => setCurrentUsersEfficiencyTarget(event.target.value)}/>
+                        <Button variant="default" className="m-2 w-[120px]" onClick={updateMileage}>Update</Button>
+                    </div>
+
                 }
 
                 <hr/>
                 {/* Mileage publisher*/}
-                <div className="flex flex-row m-2 items-center ">
+                <div className="flex flex-row mx-2 items-center ">
                     <div className="text-lg mx-2 w-[180px]">Mileage value to publish :</div>
                     <Input className="w-[180px]" type="number" value={currentMileage} min="14"
-                           max="30" step="1"
+                           max="35" step="1"
                            onChange={event => setCurrentMileage(event.target.value)}/>
+                    <Button variant="default" className="m-2 w-[120px]" onClick={publishMileage}>Publish
+                        Mileage</Button>
                 </div>
-                <Button variant="default" className="m-2 w-[180px]" onClick={publishMileage}>Publish Mileage</Button>
             </div>
             <hr/>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col mt-2">
                 <h2 className="text-xl">Notification</h2>
-                <div className="border-2 p-2 w-fit">{notificationText}</div>
+                {
+                    notificationText &&
+                    <div className="border-2 p-2 w-fit">{notificationText}</div>
+                }
             </div>
+            <Toaster position="top-right" closeButton={true}/>
         </main>
     )
 }
