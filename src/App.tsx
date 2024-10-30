@@ -15,11 +15,12 @@ function App() {
     const [currentUser, setCurrentUser] = useState("")
     const [currentUsersEfficiencyTarget, setCurrentUsersEfficiencyTarget] = useState()
     const [currentMileage, setCurrentMileage] = useState(14)
+    const [currentAverageMileage, setAverageMileage] = useState("")
     const [notificationText, setNotificationText] = useState("")
 
     useEffect(() => {
         // Fetch vehicles when the component mounts
-        const fetchVehiclesAndUsers = async () => {
+        const fetchVehicles = async () => {
             try {
                 const vehiclesResponse = await fetch('http://localhost:8080/api/v1/vehicles');
                 const vehiclesData = await vehiclesResponse.json();
@@ -30,7 +31,7 @@ function App() {
             }
         };
 
-        fetchVehiclesAndUsers();
+        fetchVehicles();
     }, []);
 
     async function fetchUsersForVehicle(vehicleId: string) {
@@ -47,10 +48,17 @@ function App() {
 
     async function fetchEfficiencyTargetForCurrentUser(userId: string) {
         try {
+            // get target value
             const usersResponse = await fetch(`http://localhost:8080/api/v1/efficiency-targets/user/${userId}/vehicle/${currentVehicle}`);
             const targetData = await usersResponse.json();
             setCurrentUsersEfficiencyTarget(targetData.efficientTargetValue)
             setCurrentUser(userId)
+
+            // get current average value
+            const res = await fetch(`http://localhost:8080/api/v1/mileage/averageMileage?userId=${userId}&vehicleId=${currentVehicle}`);
+            const averageMileage = await res.text();
+            setAverageMileage(averageMileage)
+
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -102,6 +110,13 @@ function App() {
         }
     }
 
+    async function updateAverageMileageData() {
+        // get current average value
+        const res = await fetch(`http://localhost:8080/api/v1/mileage/averageMileage?userId=${currentUser}&vehicleId=${currentVehicle}`);
+        const averageMileage = await res.text();
+        setAverageMileage(averageMileage)
+    }
+
     return (
         <main className="flex flex-col m-2">
             <h1 className="text-3xl mx-2">Demo UI</h1>
@@ -148,6 +163,16 @@ function App() {
                         <Button variant="default" className="m-2 w-[120px]" onClick={updateMileage}>Update</Button>
                     </div>
 
+                }
+                {
+                    currentUsersEfficiencyTarget &&
+                    <div className="flex flex-row mx-2 items-center">
+                        <p className="mx-2 w-[180px]">Current Average: </p>
+                        <Input className="w-[180px]" type="number" disabled={true}
+                               value={currentAverageMileage} step="1"/>
+                        <Button variant="default" className="m-2 w-[120px]"
+                                onClick={updateAverageMileageData}>Update</Button>
+                    </div>
                 }
 
                 <hr/>
